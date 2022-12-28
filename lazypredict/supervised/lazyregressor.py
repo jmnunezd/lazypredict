@@ -3,34 +3,17 @@ import pandas as pd
 from tqdm import tqdm
 import time
 from sklearn.pipeline import Pipeline
-from sklearn.impute import SimpleImputer
-from sklearn.preprocessing import StandardScaler, OneHotEncoder, OrdinalEncoder
 from sklearn.compose import ColumnTransformer
 from sklearn.metrics import (
     r2_score,
     mean_squared_error,
 )
 from lazypredict.utils import get_card_split, adjusted_rsquared
-from lazypredict import REGRESSORS
-
-
-numeric_transformer = Pipeline(
-    steps=[("imputer", SimpleImputer(strategy="mean")), ("scaler", StandardScaler())]
-)
-
-categorical_transformer_low = Pipeline(
-    steps=[
-        ("imputer", SimpleImputer(strategy="constant", fill_value="missing")),
-        ("encoding", OneHotEncoder(handle_unknown="ignore", sparse=False)),
-    ]
-)
-
-categorical_transformer_high = Pipeline(
-    steps=[
-        ("imputer", SimpleImputer(strategy="constant", fill_value="missing")),
-        # 'OrdianlEncoder' Raise a ValueError when encounters an unknown value. Check https://github.com/scikit-learn/scikit-learn/pull/13423
-        ("encoding", OrdinalEncoder()),
-    ]
+from lazypredict import (
+    REGRESSORS,
+    numeric_transformer,
+    categorical_transformer_high,
+    categorical_transformer_low,
 )
 
 
