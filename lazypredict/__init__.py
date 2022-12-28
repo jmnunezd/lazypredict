@@ -1,7 +1,12 @@
+import pandas as pd
 from sklearn.utils import all_estimators
 from sklearn.base import RegressorMixin, ClassifierMixin
 import xgboost
 import lightgbm
+
+pd.set_option("display.max_columns", None)
+pd.set_option("display.max_rows", None)
+
 
 REMOVED_CLASSIFIERS = [
     "ClassifierChain",
