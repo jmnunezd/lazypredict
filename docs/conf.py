@@ -49,9 +49,9 @@ source_suffix = ".rst"
 master_doc = "index"
 
 # General information about the project.
-project = u"Lazy Predict"
-copyright = u"2022, Shankar Rao Pandala"
-author = u"Shankar Rao Pandala"
+project = "Lazy Predict"
+copyright = "2022, Shankar Rao Pandala"
+author = "Shankar Rao Pandala"
 
 # The version info for the project you're documenting, acts as replacement
 # for |version| and |release|, also used in various other places throughout
@@ -130,8 +130,8 @@ latex_documents = [
     (
         master_doc,
         "lazypredict.tex",
-        u"Lazy Predict Documentation",
-        u"Shankar Rao Pandala",
+        "Lazy Predict Documentation",
+        "Shankar Rao Pandala",
         "manual",
     ),
 ]
@@ -141,7 +141,7 @@ latex_documents = [
 
 # One entry per manual page. List of tuples
 # (source start file, name, description, authors, manual section).
-man_pages = [(master_doc, "lazypredict", u"Lazy Predict Documentation", [author], 1)]
+man_pages = [(master_doc, "lazypredict", "Lazy Predict Documentation", [author], 1)]
 
 
 # -- Options for Texinfo output ----------------------------------------
@@ -153,7 +153,7 @@ texinfo_documents = [
     (
         master_doc,
         "lazypredict",
-        u"Lazy Predict Documentation",
+        "Lazy Predict Documentation",
         author,
         "lazypredict",
         "One line description of project.",
