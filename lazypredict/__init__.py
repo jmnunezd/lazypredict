@@ -1,7 +1,57 @@
-# -*- coding: utf-8 -*-
+from sklearn.utils import all_estimators
+from sklearn.base import RegressorMixin, ClassifierMixin
+import xgboost
+import lightgbm
 
-"""Top-level package for Lazy Predict."""
+REMOVED_CLASSIFIERS = [
+    "ClassifierChain",
+    "ComplementNB",
+    "GradientBoostingClassifier",
+    "GaussianProcessClassifier",
+    "HistGradientBoostingClassifier",
+    "MLPClassifier",
+    "LogisticRegressionCV",
+    "MultiOutputClassifier",
+    "MultinomialNB",
+    "OneVsOneClassifier",
+    "OneVsRestClassifier",
+    "OutputCodeClassifier",
+    "RadiusNeighborsClassifier",
+    "VotingClassifier",
+]
 
-__author__ = """Shankar Rao Pandala"""
-__email__ = "shankar.pandala@live.com"
-__version__ = '0.2.12'
+REMOVED_REGRESORS = [
+    "TheilSenRegressor",
+    "ARDRegression",
+    "CCA",
+    "IsotonicRegression",
+    "StackingRegressor",
+    "MultiOutputRegressor",
+    "MultiTaskElasticNet",
+    "MultiTaskElasticNetCV",
+    "MultiTaskLasso",
+    "MultiTaskLassoCV",
+    "PLSCanonical",
+    "PLSRegression",
+    "RadiusNeighborsRegressor",
+    "RegressorChain",
+    "VotingRegressor",
+]
+
+CLASSIFIERS = [
+    est
+    for est in all_estimators()
+    if (issubclass(est[1], ClassifierMixin) and (est[0] not in REMOVED_CLASSIFIERS))
+]
+
+REGRESSORS = [
+    est
+    for est in all_estimators()
+    if (issubclass(est[1], RegressorMixin) and (est[0] not in REMOVED_REGRESORS))
+]
+
+REGRESSORS.append(("XGBRegressor", xgboost.XGBRegressor))
+REGRESSORS.append(("LGBMRegressor", lightgbm.LGBMRegressor))
+
+CLASSIFIERS.append(("XGBClassifier", xgboost.XGBClassifier))
+CLASSIFIERS.append(("LGBMClassifier", lightgbm.LGBMClassifier))

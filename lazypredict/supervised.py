@@ -1,20 +1,11 @@
-"""
-Supervised Models
-"""
-# Author: Shankar Rao Pandala <shankar.pandala@live.com>
-
 import numpy as np
 import pandas as pd
 from tqdm import tqdm
-import datetime
 import time
 from sklearn.pipeline import Pipeline
-from sklearn.impute import SimpleImputer, MissingIndicator
+from sklearn.impute import SimpleImputer
 from sklearn.preprocessing import StandardScaler, OneHotEncoder, OrdinalEncoder
 from sklearn.compose import ColumnTransformer
-from sklearn.utils import all_estimators
-from sklearn.base import RegressorMixin
-from sklearn.base import ClassifierMixin
 from sklearn.metrics import (
     accuracy_score,
     balanced_accuracy_score,
@@ -23,70 +14,12 @@ from sklearn.metrics import (
     r2_score,
     mean_squared_error,
 )
-import warnings
-import xgboost
 
-# import catboost
-import lightgbm
+from lazypredict import CLASSIFIERS, REGRESSORS
 
-warnings.filterwarnings("ignore")
-pd.set_option("display.precision", 2)
-pd.set_option("display.float_format", lambda x: "%.2f" % x)
+pd.set_option('display.max_columns', None)
+pd.set_option('display.max_rows', None)
 
-removed_classifiers = [
-    "ClassifierChain",
-    "ComplementNB",
-    "GradientBoostingClassifier",
-    "GaussianProcessClassifier",
-    "HistGradientBoostingClassifier",
-    "MLPClassifier",
-    "LogisticRegressionCV", 
-    "MultiOutputClassifier", 
-    "MultinomialNB", 
-    "OneVsOneClassifier",
-    "OneVsRestClassifier",
-    "OutputCodeClassifier",
-    "RadiusNeighborsClassifier",
-    "VotingClassifier",
-]
-
-removed_regressors = [
-    "TheilSenRegressor",
-    "ARDRegression", 
-    "CCA", 
-    "IsotonicRegression", 
-    "StackingRegressor",
-    "MultiOutputRegressor", 
-    "MultiTaskElasticNet", 
-    "MultiTaskElasticNetCV", 
-    "MultiTaskLasso", 
-    "MultiTaskLassoCV", 
-    "PLSCanonical", 
-    "PLSRegression", 
-    "RadiusNeighborsRegressor", 
-    "RegressorChain", 
-    "VotingRegressor", 
-]
-
-CLASSIFIERS = [
-    est
-    for est in all_estimators()
-    if (issubclass(est[1], ClassifierMixin) and (est[0] not in removed_classifiers))
-]
-
-REGRESSORS = [
-    est
-    for est in all_estimators()
-    if (issubclass(est[1], RegressorMixin) and (est[0] not in removed_regressors))
-]
-
-REGRESSORS.append(("XGBRegressor", xgboost.XGBRegressor))
-REGRESSORS.append(("LGBMRegressor", lightgbm.LGBMRegressor))
-# REGRESSORS.append(('CatBoostRegressor',catboost.CatBoostRegressor))
-
-CLASSIFIERS.append(("XGBClassifier", xgboost.XGBClassifier))
-CLASSIFIERS.append(("LGBMClassifier", lightgbm.LGBMClassifier))
-# CLASSIFIERS.append(('CatBoostClassifier',catboost.CatBoostClassifier))
 
 numeric_transformer = Pipeline(
     steps=[("imputer", SimpleImputer(strategy="mean")), ("scaler", StandardScaler())]
@@ -106,9 +39,6 @@ categorical_transformer_high = Pipeline(
         ("encoding", OrdinalEncoder()),
     ]
 )
-
-
-# Helper function
 
 
 def get_card_split(df, cols, n=11):
@@ -133,9 +63,6 @@ def get_card_split(df, cols, n=11):
     card_high = cols[cond]
     card_low = cols[~cond]
     return card_low, card_high
-
-
-# Helper class for performing classification
 
 
 class LazyClassifier:
@@ -404,7 +331,7 @@ class LazyClassifier:
         Returns
         -------
         models: dict-object,
-            Returns a dictionary with each model pipeline as value 
+            Returns a dictionary with each model pipeline as value
             with key as name of models.
         """
         if len(self.models.keys()) == 0:
@@ -415,9 +342,6 @@ class LazyClassifier:
 
 def adjusted_rsquared(r2, n, p):
     return 1 - (1 - r2) * ((n - 1) / (n - p - 1))
-
-
-# Helper class for performing classification
 
 
 class LazyRegressor:
@@ -681,7 +605,7 @@ class LazyRegressor:
         Returns
         -------
         models: dict-object,
-            Returns a dictionary with each model pipeline as value 
+            Returns a dictionary with each model pipeline as value
             with key as name of models.
         """
         if len(self.models.keys()) == 0:
@@ -692,3 +616,20 @@ class LazyRegressor:
 
 Regression = LazyRegressor
 Classification = LazyClassifier
+
+if __name__ == "__main__":
+    from sklearn.datasets import load_breast_cancer
+    from sklearn.model_selection import train_test_split
+
+    data = load_breast_cancer()
+    X = data.data
+    y = data.target
+
+    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=.5, random_state=123)
+
+    clf = LazyClassifier(verbose=0, ignore_warnings=True, custom_metric=None)
+
+    models, predictions = clf.fit(X_train, X_test, y_train, y_test)
+    model_dictionary = clf.provide_models(X_train, X_test, y_train, y_test)
+    print(models, 10*"\n")
+    print(predictions, 10*"\n")
