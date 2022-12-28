@@ -1,4 +1,4 @@
-def get_card_split(df, cols, n=11):
+def get_card_split(df, cols, n=5):
     """
     Splits categorical columns into 2 lists based on cardinality (i.e # of unique values)
     Parameters
