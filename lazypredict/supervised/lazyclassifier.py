@@ -27,9 +27,6 @@ class LazyClassifier:
     verbose : int, optional (default=0)
         For the liblinear and lbfgs solvers set verbose to any positive
         number for verbosity.
-    ignore_warnings : bool, optional (default=True)
-        When set to True, the warning related to algorigms that are not able to run are ignored.
-    custom_metric : function, optional (default=None)
         When function is provided, models are evaluated based on the custom evaluation metric provided.
     prediction : bool, optional (default=False)
         When set to True, the predictions of all the models models are returned as dataframe.
@@ -45,7 +42,7 @@ class LazyClassifier:
     >>> X = data.data
     >>> y = data.target
     >>> X_train, X_test, y_train, y_test = train_test_split(X, y,test_size=.5,random_state =123)
-    >>> clf = LazyClassifier(verbose=0,ignore_warnings=True, custom_metric=None)
+    >>> clf = LazyClassifier(verbose=True)
     >>> models,predictions = clf.fit(X_train, X_test, y_train, y_test)
     >>> model_dictionary = clf.provide_models(X_train,X_test,y_train,y_test)
     >>> models
@@ -85,16 +82,12 @@ class LazyClassifier:
 
     def __init__(
         self,
-        verbose=0,
-        ignore_warnings=True,
-        custom_metric=None,
+        verbose=False,
         predictions=False,
         random_state=42,
         classifiers="all",
     ):
         self.verbose = verbose
-        self.ignore_warnings = ignore_warnings
-        self.custom_metric = custom_metric
         self.predictions = predictions
         self.models = {}
         self.random_state = random_state
@@ -123,16 +116,13 @@ class LazyClassifier:
         predictions : Pandas DataFrame
             Returns predictions of all the models in a Pandas DataFrame.
         """
-        Accuracy = []
-        B_Accuracy = []
-        ROC_AUC = []
-        F1 = []
-        names = []
-        TIME = []
+        accuracies = []
+        balanced_accuracies = []
+        roc_aucs = []
+        f1s = []
+        model_names = []
+        times = []
         predictions = {}
-
-        if self.custom_metric is not None:
-            CUSTOM_METRIC = []
 
         if isinstance(X_train, np.ndarray):
             X_train = pd.DataFrame(X_train)
@@ -155,6 +145,7 @@ class LazyClassifier:
 
         if self.classifiers == "all":
             self.classifiers = CLASSIFIERS
+
         else:
             try:
                 temp_list = []
@@ -162,6 +153,7 @@ class LazyClassifier:
                     full_name = (classifier.__name__, classifier)
                     temp_list.append(full_name)
                 self.classifiers = temp_list
+
             except Exception as exception:
                 print(exception)
                 print("Invalid Classifier(s)")
@@ -183,86 +175,64 @@ class LazyClassifier:
 
                 pipe.fit(X_train, y_train)
                 self.models[name] = pipe
+
                 y_pred = pipe.predict(X_test)
                 accuracy = accuracy_score(y_test, y_pred, normalize=True)
                 b_accuracy = balanced_accuracy_score(y_test, y_pred)
                 f1 = f1_score(y_test, y_pred, average="weighted")
+
                 try:
                     roc_auc = roc_auc_score(y_test, y_pred)
                 except Exception as exception:
                     roc_auc = None
-                    if self.ignore_warnings is False:
-                        print("ROC AUC couldn't be calculated for " + name)
-                        print(exception)
-                names.append(name)
-                Accuracy.append(accuracy)
-                B_Accuracy.append(b_accuracy)
-                ROC_AUC.append(roc_auc)
-                F1.append(f1)
-                TIME.append(time.time() - start)
-                if self.custom_metric is not None:
-                    custom_metric = self.custom_metric(y_test, y_pred)
-                    CUSTOM_METRIC.append(custom_metric)
-                if self.verbose > 0:
-                    if self.custom_metric is not None:
-                        print(
-                            {
-                                "Model": name,
-                                "Accuracy": accuracy,
-                                "Balanced Accuracy": b_accuracy,
-                                "ROC AUC": roc_auc,
-                                "F1 Score": f1,
-                                self.custom_metric.__name__: custom_metric,
-                                "Time taken": time.time() - start,
-                            }
-                        )
-                    else:
-                        print(
-                            {
-                                "Model": name,
-                                "Accuracy": accuracy,
-                                "Balanced Accuracy": b_accuracy,
-                                "ROC AUC": roc_auc,
-                                "F1 Score": f1,
-                                "Time taken": time.time() - start,
-                            }
-                        )
+                    print("ROC AUC couldn't be calculated for " + name)
+                    print(exception)
+
+                model_names.append(name)
+                accuracies.append(accuracy)
+                balanced_accuracies.append(b_accuracy)
+                roc_aucs.append(roc_auc)
+                f1s.append(f1)
+                times.append(time.time() - start)
+
+                if self.verbose:
+                    print(
+                        {
+                            "Model": name,
+                            "accuracies": accuracy,
+                            "Balanced accuracies": b_accuracy,
+                            "ROC AUC": roc_auc,
+                            "f1s Score": f1,
+                            "Time taken": time.time() - start,
+                        }
+                    )
                 if self.predictions:
                     predictions[name] = y_pred
+
             except Exception as exception:
-                if self.ignore_warnings is False:
-                    print(name + " model failed to execute")
-                    print(exception)
-        if self.custom_metric is None:
-            scores = pd.DataFrame(
-                {
-                    "Model": names,
-                    "Accuracy": Accuracy,
-                    "Balanced Accuracy": B_Accuracy,
-                    "ROC AUC": ROC_AUC,
-                    "F1 Score": F1,
-                    "Time Taken": TIME,
-                }
-            )
-        else:
-            scores = pd.DataFrame(
-                {
-                    "Model": names,
-                    "Accuracy": Accuracy,
-                    "Balanced Accuracy": B_Accuracy,
-                    "ROC AUC": ROC_AUC,
-                    "F1 Score": F1,
-                    self.custom_metric.__name__: CUSTOM_METRIC,
-                    "Time Taken": TIME,
-                }
-            )
-        scores = scores.sort_values(by="Balanced Accuracy", ascending=False).set_index(
-            "Model"
+                print(name + " model failed to execute")
+                print(exception)
+
+        scores = pd.DataFrame(
+            {
+                "Model": model_names,
+                "accuracies": accuracies,
+                "Balanced accuracies": balanced_accuracies,
+                "ROC AUC": roc_aucs,
+                "f1s Score": f1s,
+                "Time Taken": times,
+            }
         )
 
+        scores = scores.sort_values(
+            by="Balanced accuracies", ascending=False
+        ).set_index("Model")
+
         if self.predictions:
+            # TODO: not implemented yet
             predictions_df = pd.DataFrame.from_dict(predictions)
-        return scores, predictions_df if self.predictions is True else scores
+
+        return scores
 
     def provide_models(self, X_train, X_test, y_train, y_test):
         """
@@ -306,9 +276,8 @@ if __name__ == "__main__":
         X, y, test_size=0.5, random_state=123
     )
 
-    clf = LazyClassifier(verbose=0, ignore_warnings=True, custom_metric=None)
+    clf = LazyClassifier()
 
-    models, predictions = clf.fit(X_train, X_test, y_train, y_test)
+    models = clf.fit(X_train, X_test, y_train, y_test)
     model_dictionary = clf.provide_models(X_train, X_test, y_train, y_test)
-    print(models, 10 * "\n")
-    print(predictions, 10 * "\n")
+    print(models, 3 * "\n")
