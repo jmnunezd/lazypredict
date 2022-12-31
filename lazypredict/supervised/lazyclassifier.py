@@ -19,12 +19,7 @@ class LazyClassifier:
     This module helps in fitting to all the classification algorithms that are available in Scikit-learn
     Parameters
     ----------
-    verbose : int, optional (default=0)
-        For the liblinear and lbfgs solvers set verbose to any positive
-        number for verbosity.
-        When function is provided, models are evaluated based on the custom evaluation metric provided.
-    prediction : bool, optional (default=False)
-        When set to True, the predictions of all the models models are returned as dataframe.
+    verbose : Bool, optional (default=False)
     classifiers : list, optional (default="all")
         When function is provided, trains the chosen classifier(s).
 
@@ -37,7 +32,7 @@ class LazyClassifier:
     >>> X = data.data
     >>> y = data.target
     >>> X_train, X_test, y_train, y_test = train_test_split(X, y,test_size=.5,random_state =123)
-    >>> clf = LazyClassifier(verbose=True)
+    >>> clf = LazyClassifier()
     >>> models = clf.fit(X_train, X_test, y_train, y_test)
     >>> model_dictionary = clf.provide_models(X_train,X_test,y_train,y_test)
     >>> models
