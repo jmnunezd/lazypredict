@@ -9,6 +9,8 @@ from sklearn.metrics import (
     balanced_accuracy_score,
     roc_auc_score,
     f1_score,
+    precision_score,
+    recall_score,
 )
 from lazypredict.utils import get_card_split
 from lazypredict import (
@@ -43,7 +45,7 @@ class LazyClassifier:
     >>> y = data.target
     >>> X_train, X_test, y_train, y_test = train_test_split(X, y,test_size=.5,random_state =123)
     >>> clf = LazyClassifier(verbose=True)
-    >>> models,predictions = clf.fit(X_train, X_test, y_train, y_test)
+    >>> models = clf.fit(X_train, X_test, y_train, y_test)
     >>> model_dictionary = clf.provide_models(X_train,X_test,y_train,y_test)
     >>> models
     | Model                          |   Accuracy |   Balanced Accuracy |   ROC AUC |   F1 Score |   Time Taken |
@@ -112,14 +114,14 @@ class LazyClassifier:
         Returns
         -------
         scores : Pandas DataFrame
-            Returns metrics of all the models in a Pandas DataFrame.
-        predictions : Pandas DataFrame
-            Returns predictions of all the models in a Pandas DataFrame.
+            Returns test set metrics of all the models in a Pandas DataFrame.
         """
         accuracies = []
         balanced_accuracies = []
         roc_aucs = []
         f1s = []
+        precisions = []
+        recalls = []
         model_names = []
         times = []
         predictions = {}
@@ -177,6 +179,8 @@ class LazyClassifier:
                 self.models[name] = pipe
 
                 y_pred = pipe.predict(X_test)
+                precision = precision_score(y_test, y_pred)
+                recall = recall_score(y_test, y_pred)
                 accuracy = accuracy_score(y_test, y_pred, normalize=True)
                 b_accuracy = balanced_accuracy_score(y_test, y_pred)
                 f1 = f1_score(y_test, y_pred, average="weighted")
@@ -191,6 +195,8 @@ class LazyClassifier:
                 model_names.append(name)
                 accuracies.append(accuracy)
                 balanced_accuracies.append(b_accuracy)
+                precisions.append(precision)
+                recalls.append(recall)
                 roc_aucs.append(roc_auc)
                 f1s.append(f1)
                 times.append(time.time() - start)
@@ -199,9 +205,11 @@ class LazyClassifier:
                     print(
                         {
                             "Model": name,
-                            "accuracies": accuracy,
+                            "Accuracies": accuracy,
                             "Balanced accuracies": b_accuracy,
                             "ROC AUC": roc_auc,
+                            "Precision": precisions,
+                            "Recall": recalls,
                             "f1s Score": f1,
                             "Time taken": time.time() - start,
                         }
@@ -216,17 +224,17 @@ class LazyClassifier:
         scores = pd.DataFrame(
             {
                 "Model": model_names,
-                "accuracies": accuracies,
+                "Accuracies": accuracies,
                 "Balanced accuracies": balanced_accuracies,
                 "ROC AUC": roc_aucs,
-                "f1s Score": f1s,
+                "Precision": precisions,
+                "Recall": recalls,
+                "F1 Score": f1s,
                 "Time Taken": times,
             }
         )
 
-        scores = scores.sort_values(
-            by="Balanced accuracies", ascending=False
-        ).set_index("Model")
+        scores = scores.sort_values(by="F1 Score", ascending=False).set_index("Model")
 
         if self.predictions:
             # TODO: not implemented yet
