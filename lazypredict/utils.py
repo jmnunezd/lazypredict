@@ -1,4 +1,4 @@
-def get_card_split(df, cols, n=6):
+def get_card_split(df, cols, n=5):
     """
     Splits categorical columns into 2 lists based on cardinality (i.e # of unique values)
     Parameters
@@ -16,7 +16,11 @@ def get_card_split(df, cols, n=6):
     card_high : list-like
         Columns with cardinality >= n
     """
-    condition = df[cols].nunique() > n
-    card_high = cols[condition]
-    card_low = cols[~condition]
+    cond = df[cols].nunique() > n
+    card_high = cols[cond]
+    card_low = cols[~cond]
     return card_low, card_high
+
+
+def adjusted_rsquared(r2, n, p):
+    return 1 - (1 - r2) * ((n - 1) / (n - p - 1))
