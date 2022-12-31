@@ -15,6 +15,14 @@ from lazypredict.supervised.preprocessing import preprocess_data
 
 
 class LazyClassifier:
+    # TODO: add loved clasifiers by default
+    # TODO: add the chance to use kfolds instead of train_test_split
+    # TODO: add a Metrics class to declutter this even further
+    # TODO: make it compatible with Grid Search
+    # TODO: do something about random state variable
+    # TODO: add variable to ensure you filter results by desired variable
+    # TODO: implement predictions
+    # TODO: Improve provide_models function
     """
     This module helps in fitting to all the classification algorithms that are available in Scikit-learn
     Parameters
@@ -217,6 +225,7 @@ class LazyClassifier:
         return scores
 
     def provide_models(self, X_train, X_test, y_train, y_test):
+        # TODO: Make this work only if you already train the models?
         """
         This function returns all the model objects trained in fit function.
         If fit is not called already, then we call fit and then return the models.
