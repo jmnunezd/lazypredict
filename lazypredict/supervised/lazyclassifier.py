@@ -3,7 +3,6 @@ import pandas as pd
 from tqdm import tqdm
 import time
 from sklearn.pipeline import Pipeline
-from sklearn.compose import ColumnTransformer
 from sklearn.metrics import (
     accuracy_score,
     balanced_accuracy_score,
@@ -12,13 +11,8 @@ from sklearn.metrics import (
     precision_score,
     recall_score,
 )
-from lazypredict.utils import get_card_split
-from lazypredict import (
-    CLASSIFIERS,
-    numeric_transformer,
-    categorical_transformer_high,
-    categorical_transformer_low,
-)
+from lazypredict import CLASSIFIERS
+from lazypredict.supervised.preprocessing import preprocess_data
 
 
 class LazyClassifier:
@@ -126,24 +120,7 @@ class LazyClassifier:
         times = []
         predictions = {}
 
-        if isinstance(X_train, np.ndarray):
-            X_train = pd.DataFrame(X_train)
-            X_test = pd.DataFrame(X_test)
-
-        numeric_features = X_train.select_dtypes(include=[np.number]).columns
-        categorical_features = X_train.select_dtypes(include=["object"]).columns
-
-        categorical_low, categorical_high = get_card_split(
-            X_train, categorical_features
-        )
-
-        preprocessor = ColumnTransformer(
-            transformers=[
-                ("numeric", numeric_transformer, numeric_features),
-                ("categorical_low", categorical_transformer_low, categorical_low),
-                ("categorical_high", categorical_transformer_high, categorical_high),
-            ]
-        )
+        preprocessing_pipeline = preprocess_data(X_train, X_test)
 
         if self.classifiers == "all":
             self.classifiers = CLASSIFIERS
@@ -166,13 +143,16 @@ class LazyClassifier:
                 if "random_state" in model().get_params().keys():
                     pipe = Pipeline(
                         steps=[
-                            ("preprocessor", preprocessor),
+                            ("preprocessing_pipeline", preprocessing_pipeline),
                             ("classifier", model(random_state=self.random_state)),
                         ]
                     )
                 else:
                     pipe = Pipeline(
-                        steps=[("preprocessor", preprocessor), ("classifier", model())]
+                        steps=[
+                            ("preprocessing_pipeline", preprocessing_pipeline),
+                            ("classifier", model()),
+                        ]
                     )
 
                 pipe.fit(X_train, y_train)
